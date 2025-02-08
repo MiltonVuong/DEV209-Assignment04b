@@ -86,7 +86,6 @@ li.completed {
 #todos li button {
   width: 80px;
   text-align: center;
-  background-color: #ff4d4d;
   color: white;
   border: none;
   border-radius: 4px;
@@ -94,5 +93,21 @@ li.completed {
 }
 
 #todos li button:hover {
+  background-color: #ff1a1a;
+}
+
+.edit-button {
+  background-color: orange;
+}
+
+.edit-button:hover {
+  background-color: darkorange;
+}
+
+#todos li .delete-button {
+  background-color: #ff4d4d;
+}
+
+#todos li .delete-button:hover {
   background-color: #ff1a1a;
 }

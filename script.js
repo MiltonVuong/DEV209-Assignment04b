@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiUrl = 'http://localhost:3000';
 
     // Check for saved auth token and load todos if available
-    const authToken = getCookie('authToken');
+    let authToken = getCookie('authToken');
     if (authToken) {
         authDiv.style.display = 'none';
         todoListDiv.style.display = 'block';
@@ -52,7 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (response.ok) {
             const data = await response.json();
-            setCookie('authToken', data.token, 1); // Set cookie for 1 day
+            authToken = data.token; // Update authToken
+            setCookie('authToken', authToken, 1); // Set cookie for 1 day
             authDiv.style.display = 'none';
             todoListDiv.style.display = 'block';
             loadTodos();
@@ -94,12 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logoutButton.addEventListener('click', () => {
         setCookie('authToken', '', -1); // Remove cookie
+        authToken = null; // Clear authToken
         authDiv.style.display = 'block';
         todoListDiv.style.display = 'none';
     });
 
     async function loadTodos() {
-        const authToken = getCookie('authToken');
+        authToken = getCookie('authToken');
         console.log(`Auth Token: ${authToken}`); // Log the auth token
         try {
             console.log(`trying`);
@@ -141,6 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     li.appendChild(span);
 
+                    // Create edit button
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.classList.add('edit-button'); // Add class for styling
+                    editButton.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent the click event from bubbling up to the li element
+                        editTodoItem(todo.id, todo.title, todo.description);
+                    });
+                    li.appendChild(editButton);
+
                     // Create delete button
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
@@ -164,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function toggleTodoCompletion(id) {
         console.log(`Toggling completion for todo with id: ${id}`); // Log the ID
-        const authToken = getCookie('authToken');
+        authToken = getCookie('authToken');
         console.log(`Auth Token: ${authToken}`); // Log the auth token
         try {
             const response = await fetch(`${apiUrl}/todos/${id}/toggle`, {
@@ -189,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteTodoItem(id) {
         console.log(`Deleting todo with id: ${id}`); // Log the ID
-        const authToken = getCookie('authToken');
+        authToken = getCookie('authToken');
         console.log(`Auth Token: ${authToken}`); // Log the auth token
         try {
             const response = await fetch(`${apiUrl}/todos/${id}`, {
@@ -209,6 +221,39 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error deleting todo:', error);
             alert('Error deleting todo.');
+        }
+    }
+
+    function editTodoItem(id, currentTitle, currentDescription) {
+        const newTitle = prompt('Edit Todo Title:', currentTitle);
+        const newDescription = prompt('Edit Todo Description:', currentDescription);
+
+        if (newTitle !== null && newTitle.trim() !== '') {
+            updateTodoItem(id, newTitle, newDescription);
+        }
+    }
+
+    async function updateTodoItem(id, title, description) {
+        authToken = getCookie('authToken');
+        try {
+            const response = await fetch(`${apiUrl}/todos/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ title, description })
+            });
+
+            if (response.ok) {
+                loadTodos();
+            } else {
+                console.error('Failed to update todo:', response.statusText);
+                alert('Failed to update todo.');
+            }
+        } catch (error) {
+            console.error('Error updating todo:', error);
+            alert('Error updating todo.');
         }
     }
 
